@@ -13,10 +13,11 @@ input_select:
       - Спальня
       - Кухня
       - Коридор
+      - Стандартная уборка
 
 script:
-  vacuum_all:
-    alias: "Пропылесосить всю квартиру"
+  vacuum_all_default:
+    alias: "Стандартная уборка"
     sequence:
       - service: vacuum.start
         data:
@@ -28,7 +29,13 @@ script:
       - service: vacuum.xiaomi_clean_zone
         data:
           entity_id: vacuum.xiaomi_vacuum_cleaner
-          zone: [[18890,24240,25600,28650]]
+          coordinates: &living_room_coordinates
+          - 18890
+          - 24240
+          - 25600
+          - 28650
+          zone:
+          - *living_room_coordinates
           repeats: 2
 
   vacuum_bedroom:
@@ -38,7 +45,14 @@ script:
         data:
           entity_id: vacuum.xiaomi_vacuum_cleaner
           command: app_zoned_clean
-          params: [[23812,20690,27330,24500,2]]
+          coordinates: &bedroom_coordinates
+          - 23812
+          - 20690
+          - 27330
+          - 24500
+          - 2
+          params:
+          - *bedroom_coordinates
 
   vacuum_kitchen:
     alias: "Пропылесосить кухню"
@@ -46,7 +60,13 @@ script:
       - service: vacuum.xiaomi_clean_zone
         data:
           entity_id: vacuum.xiaomi_vacuum_cleaner
-          zone: [[21630,28790,25600,33880]]
+          coordinates: &kitchen_coordinates
+          - 21630
+          - 28790
+          - 25600
+          - 33880
+          zone:
+          - *kitchen_coordinates
           repeats: 2
 
   vacuum_hallway:
@@ -55,7 +75,42 @@ script:
       - service: vacuum.xiaomi_clean_zone
         data:
           entity_id: vacuum.xiaomi_vacuum_cleaner
-          zone: [[25730,24450,30250,31550]]
+          coordinates: &hallway_coordinates
+          - 25730
+          - 24450
+          - 27330
+          - 28950
+          zone:
+          - *hallway_coordinates
+          repeats: 2
+
+  vacuum_hall:
+    alias: "Пропылесосить прихожую"
+    sequence:
+      - service: vacuum.xiaomi_clean_zone
+        data:
+          entity_id: vacuum.xiaomi_vacuum_cleaner
+          coordinates: &hall_coordinates
+          - 25730
+          - 28950
+          - 30250
+          - 31550
+          zone:
+          - *hall_coordinates
+          repeats: 2
+
+  vacuum_all:
+    alias: "Пропылесосить всю квартиру (зонами)"
+    sequence:
+      - service: vacuum.xiaomi_clean_zone
+        data:
+          entity_id: vacuum.xiaomi_vacuum_cleaner
+          zone:
+          - *living_room_coordinates
+          - *bedroom_coordinates
+          - *hallway_coordinates
+          - *kitchen_coordinates
+          - *hall_coordinates
           repeats: 2
 
 automation:
@@ -71,6 +126,8 @@ automation:
         entity_id: >
           {% if is_state("input_select.vacuum_room", "Вся квартира") %}
             script.vacuum_all
+          {% elif is_state("input_select.vacuum_room", "Стандартная уборка") %}
+            script.vacuum_all_default
           {% elif is_state("input_select.vacuum_room", "Зал") %}
             script.vacuum_living_room
           {% elif is_state("input_select.vacuum_room", "Спальня") %}
