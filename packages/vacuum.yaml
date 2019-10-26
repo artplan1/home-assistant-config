@@ -1,0 +1,156 @@
+vacuum:
+  - platform: xiaomi_miio
+    host: 192.168.1.7
+    token: !secret vacuum_token
+
+input_select:
+  vacuum_room:
+    name: Комната для уборки
+    options:
+      - '-'
+      - Вся квартира
+      - Зал
+      - Спальня
+      - Кухня
+      - Коридор
+      - Туалет и ванная
+
+script:
+  vacuum_all:
+    alias: "Пропылесосить всю квартиру"
+    sequence:
+      - service: vacuum.start
+        data:
+          entity_id: vacuum.xiaomi_vacuum_cleaner
+
+  vacuum_living_room:
+    alias: "Пропылесосить зал"
+    sequence:
+      - service: vacuum.xiaomi_clean_zone
+        data:
+          entity_id: vacuum.xiaomi_vacuum_cleaner
+          zone: [[18890,24240,25600,28650,2]]
+          repeats: 2
+
+  vacuum_bedroom:
+    alias: "Пропылесосить спальню"
+    sequence:
+      - service: vacuum.send_command
+        data:
+          entity_id: vacuum.xiaomi_vacuum_cleaner
+          command: app_zoned_clean
+          params: [[23812,20690,27330,24500,2]]
+
+automation:
+  - alias: Пылесосить
+    hide_entity: True
+    trigger:
+    - platform: state
+      entity_id: input_select.vacuum_room
+
+    action:
+    - service: script.turn_on
+      data_template:
+        entity_id: >
+          {% if is_state("input_select.vacuum_room", "Вся квартира") %}
+            script.vacuum_all
+          {% elif is_state("input_select.vacuum_room", "Зал") %}
+            script.vacuum_living_room
+          {% elif is_state("input_select.vacuum_room", "Спальня") %}
+            script.vacuum_bedroom
+          # {% elif is_state("input_select.vacuum_room", "Ensuite Bathroom") %}
+          #   script.vacuum_ensuite_bathroom
+          # {% elif is_state("input_select.vacuum_room", "Entryway") %}
+          #   script.vacuum_entryway
+          # {% elif is_state("input_select.vacuum_room", "Kitchen") %}
+          #   script.vacuum_kitchen
+          # {% elif is_state("input_select.vacuum_room", "Living Room") %}
+          #   script.vacuum_living_room
+          # {% elif is_state("input_select.vacuum_room", "Main Bathroom") %}
+          #   script.vacuum_main_bathroom
+          # {% elif is_state("input_select.vacuum_room", "Mopping Surfaces") %}
+          #   script.vacuum_mopping_surfaces
+          # {% elif is_state("input_select.vacuum_room", "Projector Room") %}
+          #   script.vacuum_projector_room
+          # {% elif is_state("input_select.vacuum_room", "Study") %}
+          #   script.vacuum_study
+          {% else %}
+          {% endif %}
+    # - service: input_select.select_option
+    #   entity_id: input_select.vacuum_room
+    #   data_template:
+    #     option: "-"
+
+#   vacuum_dining_room:
+#         alias: "Vacuum Dining Room"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[16079,24984,19679,28134,1]]
+#   vacuum_ensuite_bathroom:
+#         alias: "Vacuum Ensuite Bathroom"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[12038,27467,16088,32017,1]]
+# # Entryway not working correctly
+#   vacuum_entryway:
+#         alias: "Vacuum Entryway"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[22948,22862,24798,25062,1]]
+#   vacuum_kitchen:
+#         alias: "Vacuum Kitchen"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[19444,24947,21444,27997,1]]
+#   vacuum_living_room:
+#         alias: "Vacuum Living Room"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[18266,19661,23016,25061,1]]
+#   vacuum_main_bathroom:
+#         alias: "Vacuum Main Bathroom"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[19501,29139,22051,31789,1]]
+#   vacuum_mopping_surfaces:
+#         alias: "Vacuum Mopping Surfaces"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[16602,29163,22052,32313,1],[16028,24951,21578,28151,1],[22975,22737,24375,25087,1]]
+#   vacuum_projector_room:
+#         alias: "Vacuum Projector Room"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[22058,28711,26208,32061,1]]
+#   vacuum_study:
+#         alias: "Vacuum Study"
+#         sequence:
+#           - service: vacuum.send_command
+#             data:
+#               entity_id: vacuum.xiaomi_vacuum_cleaner
+#               command: app_zoned_clean
+#               params: [[23004,25042,26404,28442,1]]
