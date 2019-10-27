@@ -4,4 +4,6 @@
 .storage
 .cloud
 
+.DS_Store
+
 secrets.yaml
