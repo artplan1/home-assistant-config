@@ -13,8 +13,9 @@
     Зональная уборка реализована с использованием именнованных зон, заданных в Valetudo
 
     <p align='center'>
+      <img src='./.github/screenshots/ha-vacuum-card.png' width='50%' />
       <img src='./.github/screenshots/zones-in-valetudo.png' width='30%' />
-      <img src='./.github/screenshots/zone-map-in-valetudo.png' width='30%' />
+      <img src='./.github/screenshots/zone-map-in-valetudo.png' width='50%' />
     </p>
 
 ## Плагины Hass.io
