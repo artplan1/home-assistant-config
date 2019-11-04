@@ -3,6 +3,10 @@
 
 .storage
 .cloud
+deps
+__pycache__
+
+appdaemon/compiled
 
 .DS_Store
 

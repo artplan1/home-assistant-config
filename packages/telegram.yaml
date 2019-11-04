@@ -9,6 +9,6 @@ telegram_bot:
       - !secret telegram_chat_id_1
 
 notify:
-  - name: telegram
+  - name: telegram_chat_id_1
     platform: telegram
     chat_id: !secret telegram_chat_id_1

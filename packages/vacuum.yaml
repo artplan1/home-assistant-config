@@ -79,6 +79,20 @@ script:
           params:
             zone_ids: ['Living room', 'Bedroom', 'Hallway', 'Kitchen', 'Hall']
 
+  vacuum_stop:
+    alias: "Остановить уборку"
+    sequence:
+      - service: vacuum.stop
+        data:
+          entity_id: vacuum.rockrobo
+
+  vacuum_return_to_base:
+    alias: "Возврат на базу"
+    sequence:
+      - service: vacuum.return_to_base
+        data:
+          entity_id: vacuum.rockrobo
+
 automation:
   - alias: Пылесосить
     hide_entity: True
@@ -104,3 +118,28 @@ automation:
             script.vacuum_hallway
           {% else %}
           {% endif %}
+
+  - alias: Отправка статуса об уборке
+    hide_entity: True
+    trigger:
+      - platform: state
+        entity_id: vacuum.rockrobo
+        from: "cleaning"
+        to: "idle"
+      - platform: state
+        entity_id: vacuum.rockrobo
+        from: "cleaning"
+        to: "docked"
+      - platform: state
+        entity_id: vacuum.rockrobo
+        from: "cleaning"
+        to: "returning"
+
+    action:
+      - service: notify.telegram_chat_id_1
+        data:
+          title: '*Уборка окончена*'
+          message: "{{ state_attr('vacuum.rockrobo', 'last_run_stats') }}"
+          data:
+            photo:
+              - url: "http://localhost:8123{{ state_attr('camera.rockrobo_map', 'entity_picture') }}"

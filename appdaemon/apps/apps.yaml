@@ -1,0 +1,4 @@
+---
+telegram:
+  module: telegram
+  class: TelegramBotEventListener

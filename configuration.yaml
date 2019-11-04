@@ -2,6 +2,8 @@
 homeassistant:
   packages: !include_dir_named packages
 
+default_config:
+
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
