@@ -1,0 +1,38 @@
+# water_heater:
+#  - platform: R4S_G200S
+#    mac: 'D7:DE:31:72:27:C2'
+#    key: 'bbbbbbbbbbbbbbbb'
+#    scan_interval: 90
+#    device: hci0 # your bluetooth device
+
+# switch:
+#   - platform: template
+#     switches:
+#       kettle_hold:
+#         value_template: "{{ states.climate.g200s.attributes.hold }}"
+#         turn_on:
+#           service: climate.set_hold_mode
+#           data:
+#             entity_id: climate.g200s
+#             hold_mode: hold_on
+#         turn_off:
+#           service: climate.set_hold_mode
+#           data:
+#             entity_id: climate.g200s
+#             hold_mode: hold_off
+
+# sensor:
+#   - platform: template
+#     sensors:
+#       kettler_sync_time:
+#         friendly_name: Синхронизировано в
+#         value_template: "{{ states.climate.g200s.attributes.sync_time }}"
+#       kettler_times:
+#         friendly_name: Количество включений
+#         value_template: "{{ states.climate.g200s.attributes.times }}"
+#       kettler_alltime:
+#         friendly_name: Время работы
+#         value_template: "{{ states.climate.g200s.attributes.alltime }}"
+#       kettler_energy:
+#         friendly_name: Потрачено энергии
+#         value_template: "{{ states.climate.g200s.attributes.energy }}"
