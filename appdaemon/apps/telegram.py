@@ -7,6 +7,11 @@ cleaner_keyboard = [
     [("На базу", "/cleaner_to_base")]
 ]
 
+kettle_keyboard = [
+    [('Вскипятить', '/kettle_boil'), ('Стоп', '/stop_boiling')],
+    [('Статус', '/kettle_status')]
+]
+
 class TelegramBotEventListener(hass.Hass):
     def initialize(self):
         self.listen_event(self.receive_telegram_callback, 'telegram_callback')
@@ -27,6 +32,13 @@ class TelegramBotEventListener(hass.Hass):
                             message="",
                             disable_notification=True,
                             inline_keyboard=cleaner_keyboard)
+        elif command == '/kettle':
+            self.call_service('telegram_bot/send_message',
+                            title='Команда',
+                            target=user_id,
+                            message="",
+                            disable_notification=True,
+                            inline_keyboard=kettle_keyboard)
 
     def receive_telegram_callback(self, event_id, payload_event, *args):
         assert event_id == 'telegram_callback'
@@ -57,3 +69,24 @@ class TelegramBotEventListener(hass.Hass):
             self.call_service('telegram_bot/answer_callback_query',
                                 message='Возврат на базу',
                                 callback_query_id=callback_id)
+
+        elif data_callback == '/kettle_boil':
+            self.call_service('water_heater/turn_on')
+
+            self.call_service('telegram_bot/answer_callback_query',
+                                message='Кипятим',
+                                callback_query_id=callback_id)
+
+        elif data_callback == '/stop_boiling':
+            self.call_service('water_heater/turn_off')
+
+            self.call_service('telegram_bot/answer_callback_query',
+                                message='ОК',
+                                callback_query_id=callback_id)
+
+        elif data_callback == '/kettle_status':
+            kettle_state = self.get_state("water_heater.g200s", attribute="all")
+
+            self.call_service('telegram_bot/send_message',
+                                message=str(kettle_state['attributes']),
+                                target=chat_id)

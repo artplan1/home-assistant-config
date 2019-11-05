@@ -18,7 +18,7 @@ from homeassistant.const import (STATE_OFF, TEMP_CELSIUS)
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
-SCAN_INTERVAL = timedelta(seconds=60)
+SCAN_INTERVAL = timedelta(seconds=30)
 
 CONF_MIN_TEMP = 40
 CONF_MAX_TEMP = 100
@@ -43,8 +43,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_DEV): cv.string,
 })
 
-
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     mac = config.get(CONF_MAC)
     key = config.get(CONF_KEY)
@@ -60,9 +58,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         return False
 
     async_add_entities([R4S_G200S(mac, key, device)])
-
-
-
 
 
 class R4S_G200S(WaterHeaterDevice):
@@ -129,6 +124,12 @@ class R4S_G200S(WaterHeaterDevice):
     def operation_list(self):
         return OPERATION_LIST
 
+    async def async_turn_on(self, **kwargs):  # pylint: disable=unused-argument
+        await self.modeOn()
+
+    async def async_turn_off(self, **kwargs):  # pylint: disable=unused-argument
+        await self.modeOff()
+
     async def async_set_operation_mode(self, operation_mode):
         if operation_mode == STATE_ELECTRIC:
             if self._temp is None:
@@ -149,9 +150,9 @@ class R4S_G200S(WaterHeaterDevice):
         self._tgtemp = temperature
         await self.async_set_operation_mode(STATE_ELECTRIC)
 
-#    @property
-#    def is_on(self):
-#        return self._is_on
+    @property
+    def is_on(self):
+        return self._is_on
 
     @property
     def min_temp(self):
@@ -182,8 +183,6 @@ class R4S_G200S(WaterHeaterDevice):
     async def async_update(self):
         await self.modeUpdate()
 
-
-
     ### additional methods
     def iterase(self): # counter
         self._iter+=1
@@ -197,8 +196,6 @@ class R4S_G200S(WaterHeaterDevice):
         if len(char) < 2:
             char = '0' + char
         return char
-
-
 
 # common cmd
     def sendResponse(self):
@@ -351,45 +348,47 @@ class R4S_G200S(WaterHeaterDevice):
             _LOGGER.error('error sendMode')
         return answ
 
-    def sendUseBackLight(self, onoff="01"):
-        answ = False
-        try:
-            self.child.sendline("char-write-req 0x000e 55" + self.decToHex(self._iter) + "37c8c8" + onoff + "aa") #  onoff: 00 - off, 01 - on
-            self.child.expect("value: ")
-            self.child.expect("\r\n")
-            self.child.expect(r'\[LE\]>')
-            self.iterase()
-            answ = True
-        except:
-            answ = False
-            _LOGGER.error('error sendUseBaclLight')
-        return answ
+    # def sendUseBackLight(self, onoff="01"):
+    #     answ = False
+    #     try:
+    #         self.child.sendline("char-write-req 0x000e 55" + self.decToHex(self._iter) + "37c8c8" + onoff + "aa") #  onoff: 00 - off, 01 - on
+    #         self.child.expect("value: ")
+    #         self.child.expect("\r\n")
+    #         self.child.expect(r'\[LE\]>')
+    #         self.iterase()
+    #         answ = True
+    #     except:
+    #         answ = False
+    #         _LOGGER.error('error sendUseBaclLight')
+    #     return answ
 
-    def sendSetLights(self, rand, boilOrLight = "00", rgb1 = '0000ff', rgb2 = 'ff0000', bright = ""): # 00 - boil light    01 - backlight
-        answ = False
-        try:
-            if boilOrLight == "00":
-                scale_light = ['28', '46', '64']
-            else:
-                scale_light = ['00', '32', '64']
-            if rgb1 == '0000ff' and rgb2 == 'ff0000': # hardcoded to reduce calc time
-                rgb_mid = '00ff00'
-            else:
-                rgb_mid = self.calcMiddleColor(rgb1, rgb2)
-            self.child.sendline("char-write-req 0x000e 55" + self.decToHex(self._iter) + "32" + boilOrLight + scale_light[0] + rand + rgb1 + scale_light[1] + rand + rgb_mid + scale_light[2] + rand + rgb2 + "aa")
-            self.child.expect("value: ")
-            self.child.expect("\r\n")
-            self.child.expect(r'\[LE\]>')
-            self.iterase()
-            answ = True
-        except:
-            answ = False
-            _LOGGER.error('error sendSetLights')
-        return answ
+    # def sendSetLights(self, rand, boilOrLight = "00", rgb1 = '0000ff', rgb2 = 'ff0000', bright = ""): # 00 - boil light    01 - backlight
+    #     answ = False
+    #     try:
+    #         if boilOrLight == "00":
+    #             scale_light = ['28', '46', '64']
+    #         else:
+    #             scale_light = ['00', '32', '64']
+    #         if rgb1 == '0000ff' and rgb2 == 'ff0000': # hardcoded to reduce calc time
+    #             rgb_mid = '00ff00'
+    #         else:
+    #             rgb_mid = self.calcMiddleColor(rgb1, rgb2)
+    #         self.child.sendline("char-write-req 0x000e 55" + self.decToHex(self._iter) + "32" + boilOrLight + scale_light[0] + rand + rgb1 + scale_light[1] + rand + rgb_mid + scale_light[2] + rand + rgb2 + "aa")
+    #         self.child.expect("value: ")
+    #         self.child.expect("\r\n")
+    #         self.child.expect(r'\[LE\]>')
+    #         self.iterase()
+    #         answ = True
+    #     except:
+    #         answ = False
+    #         _LOGGER.error('error sendSetLights')
+    #     return answ
 
 ### composite methods
     def connect(self):
+        _LOGGER.info('connecting')
         if self._is_busy:
+            _LOGGER.info('busy')
             self.disconnect()
         try:
             self.child = pexpect.spawn("gatttool --adapter=" + self._device + " -I -t random -b " + self._mac, ignore_sighup=False)
@@ -410,6 +409,7 @@ class R4S_G200S(WaterHeaterDevice):
         self.child = None
 
     async def modeOn(self, mode = "00", temp = "00"):
+        _LOGGER.info('turning ON')
         if not self._is_busy:
             self._is_busy = True
             answ = False
@@ -417,10 +417,10 @@ class R4S_G200S(WaterHeaterDevice):
             try:
                 if self.sendResponse():
                     if self.sendAuth():
-                        if self.sendMode(mode, temp):
-                            if self.sendOn():
-                                if self.sendStatus():
-                                    answ = True
+                        # if self.sendMode(mode, temp):
+                        if self.sendOn():
+                            if self.sendStatus():
+                                answ = True
             except:
                 _LOGGER.error('error modeOn')
             self.disconnect()
@@ -430,6 +430,7 @@ class R4S_G200S(WaterHeaterDevice):
             return False
 
     async def modeOff(self):
+        _LOGGER.info('turning OFF')
         if not self._is_busy:
             self._is_busy = True
             answ = False
@@ -464,11 +465,11 @@ class R4S_G200S(WaterHeaterDevice):
             if answer:
                 self._is_auth = True
                 self._avialible = True
-                if self.sendUseBackLight():
-                    if self.sendSetLights('5e'):
-                        if self.sendSync():
-                            if self.sendStatus():
-                                self._time_upd = time.strftime("%H:%M")
+                # if self.sendUseBackLight():
+                # if self.sendSetLights('5e'):
+                if self.sendSync():
+                    if self.sendStatus():
+                        self._time_upd = time.strftime("%H:%M")
             else:
                 self._is_auth = False
                 self._avialible = False
@@ -478,6 +479,7 @@ class R4S_G200S(WaterHeaterDevice):
         self.disconnect()
 
     async def modeUpdate(self):
+        _LOGGER.info('requsting update')
         if not self._is_busy:
             self._is_busy = True
             answ = False
